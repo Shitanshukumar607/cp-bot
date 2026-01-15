@@ -111,8 +111,8 @@ export async function assignRankRole(member, guildId, rank) {
  * Assign all applicable roles for a verified user
  * @param {GuildMember} member - Discord guild member
  * @param {string} guildId - Guild ID
- * @param {string} platform - Platform name ('codeforces' or 'codechef')
- * @param {string|null} rank - Codeforces rank (null for CodeChef)
+ * @param {string} platform - Platform name ('codeforces')
+ * @param {string|null} rank - Codeforces rank
  * @returns {Promise<Object>} Object with assignment results
  */
 export async function assignVerificationRoles(

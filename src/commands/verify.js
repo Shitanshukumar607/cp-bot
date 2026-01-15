@@ -1,20 +1,5 @@
-/**
- * Verify Command
- *
- * Completes the verification process by checking if the user
- * has submitted a Compilation Error to the assigned problem.
- *
- * Verification Flow:
- * 1. User runs /verify
- * 2. Bot fetches user's pending verifications
- * 3. Bot checks if CE was submitted to the required problem
- * 4. If verified: assign roles, save to linked_accounts, cleanup
- * 5. If not: provide feedback on why verification failed
- */
-
 import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
 import * as codeforcesService from "../services/codeforces.service.js";
-import * as codechefService from "../services/codechef.service.js";
 import {
   getPendingVerifications,
   deletePendingVerification,
@@ -25,19 +10,7 @@ import { isExpired, getRemainingTime } from "../utils/time.js";
 
 export const data = new SlashCommandBuilder()
   .setName("verify")
-  .setDescription("Complete your CP account verification")
-  .addStringOption((option) =>
-    option
-      .setName("platform")
-      .setDescription(
-        "Which platform to verify (optional - verifies all pending if not specified)"
-      )
-      .setRequired(false)
-      .addChoices(
-        { name: "Codeforces", value: "codeforces" },
-        { name: "CodeChef", value: "codechef" }
-      )
-  );
+  .setDescription("Complete your Codeforces account verification");
 
 export async function execute(interaction) {
   await interaction.deferReply();
@@ -50,7 +23,6 @@ export async function execute(interaction) {
     // Step 1: Get pending verifications
     let pendingVerifications = await getPendingVerifications(userId, guildId);
 
-    // Filter by platform if specified
     if (platformFilter) {
       pendingVerifications = pendingVerifications.filter(
         (v) => v.platform === platformFilter
@@ -61,11 +33,10 @@ export async function execute(interaction) {
     if (!pendingVerifications || pendingVerifications.length === 0) {
       return await interaction.editReply({
         content:
-          "❌ You have no pending verifications.\n\nUse `/link codeforces <username>` or `/link codechef <username>` to start the verification process.",
+          "You have no pending verifications.\n\nUse `/link codeforces <username>` to start the verification process.",
       });
     }
 
-    // Step 2: Process each pending verification
     const results = [];
 
     for (const pending of pendingVerifications) {
@@ -109,13 +80,6 @@ export async function execute(interaction) {
               console.log("Could not fetch user rank, continuing without it");
             }
           }
-        } else if (pending.platform === "codechef") {
-          verificationResult =
-            await codechefService.checkCompilationErrorSubmission(
-              pending.username,
-              pending.problem_id,
-              pending.started_at
-            );
         }
       } catch (error) {
         console.error(`Error verifying ${pending.platform}:`, error);
@@ -197,14 +161,8 @@ export async function execute(interaction) {
   }
 }
 
-/**
- * Parse Codeforces problem ID to get contestId and index
- * @param {string} problemId - Problem ID (e.g., "1A", "1234B")
- * @returns {Object} Object with contestId and index
- */
+
 function parseCodeforcesProblemId(problemId) {
-  // Problem IDs are formatted as <contestId><index>
-  // Examples: "1A", "1234B", "1800A1"
   const match = problemId.match(/^(\d+)([A-Za-z]\d*)$/);
 
   if (!match) {
