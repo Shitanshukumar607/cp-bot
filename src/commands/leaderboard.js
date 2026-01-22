@@ -6,22 +6,6 @@ export const data = new SlashCommandBuilder()
   .setName("leaderboard")
   .setDescription("View the Codeforces leaderboard for this server");
 
-function getRankColor(rank) {
-  const colors = {
-    newbie: 0x808080, // Gray
-    pupil: 0x008000, // Green
-    specialist: 0x03a89e, // Cyan
-    expert: 0x0000ff, // Blue
-    "candidate master": 0xaa00aa, // Violet
-    master: 0xff8c00, // Orange
-    "international master": 0xff8c00, // Orange
-    grandmaster: 0xff0000, // Red
-    "international grandmaster": 0xff0000, // Red
-    "legendary grandmaster": 0xff0000, // Red with special
-  };
-  return colors[rank?.toLowerCase()] || 0x808080;
-}
-
 function getPositionDisplay(position) {
   switch (position) {
     case 1:
@@ -100,7 +84,7 @@ export async function execute(interaction) {
     const chunkSize = 10;
     for (let i = 0; i < entries.length; i += chunkSize) {
       const chunk = entries.slice(i, i + chunkSize);
-      const fieldName = i === 0 ? "Rankings" : `Rankings (continued)`;
+      const fieldName = i === 0 ? "Rankings" : "Rankings (continued)";
       embed.addFields({
         name: fieldName,
         value: chunk.join("\n"),
