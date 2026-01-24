@@ -1,9 +1,18 @@
-import { Client, Collection, Events, GatewayIntentBits } from "discord.js";
+import {
+	Client,
+	Collection,
+	Events,
+	GatewayIntentBits
+} from "discord.js";
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import {
+	handleCodeExecution,
+} from "./handlers/codeExecutionHandler.js";
 import { cleanupExpiredVerifications } from "./services/supabase.client.js";
+import { cleanupRateLimitData } from "./utils/rateLimiter.js";
 
 dotenv.config();
 
@@ -24,7 +33,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const client = new Client({
-	intents: [GatewayIntentBits.Guilds],
+	intents: [
+		GatewayIntentBits.Guilds,
+		GatewayIntentBits.GuildMessages,
+		GatewayIntentBits.MessageContent,
+		GatewayIntentBits.DirectMessages,
+	],
 });
 
 client.commands = new Collection();
@@ -91,7 +105,7 @@ async function handleInteraction(interaction) {
 }
 
 // Cleanup expired verifications periodically
-function startCleanupJob() {
+function startVerificationCleanupJob() {
 	const CLEANUP_INTERVAL = 5 * 60 * 1000;
 
 	setInterval(async () => {
@@ -108,6 +122,31 @@ function startCleanupJob() {
 	console.log("Verification cleanup job started (every 5 minutes)");
 }
 
+function startRateLimitCleanupJob() {
+	const CLEANUP_INTERVAL = 5 * 60 * 1000;
+
+	setInterval(() => {
+		try {
+			cleanupRateLimitData();
+		} catch (error) {
+			console.error("Error during rate limit cleanup:", error);
+		}
+	}, CLEANUP_INTERVAL);
+
+	console.log("Rate limit cleanup job started (every 5 minutes)");
+}
+
+async function handleMessage(message) {
+	if (message.author.bot || !message.mentions.has(client.user.id)) return;
+
+	try {
+		await handleCodeExecution(message, client);
+	} catch (error) {
+		console.error("Error handling code execution:", error);
+	}
+
+}
+
 client.once(Events.ClientReady, (readyClient) => {
 	console.log("═".repeat(50));
 	console.log("Bot is online!");
@@ -116,10 +155,12 @@ client.once(Events.ClientReady, (readyClient) => {
 	console.log(`Serving ${readyClient.guilds.cache.size} guild(s)`);
 	console.log("═".repeat(50));
 
-	startCleanupJob();
+	startVerificationCleanupJob();
+	startRateLimitCleanupJob();
 });
 
 client.on(Events.InteractionCreate, handleInteraction);
+client.on(Events.MessageCreate, handleMessage);
 
 client.on(Events.Error, (error) => {
 	console.error("Discord client error:", error);
@@ -130,7 +171,12 @@ process.on("unhandledRejection", (error) => {
 	console.error("Unhandled promise rejection:", error);
 });
 
-// Start the bot
+// Handle uncaught exceptions
+process.on("uncaughtException", (error) => {
+	console.error("Uncaught exception:", error);
+});
+
+
 async function main() {
 	console.log("Starting CP Verification Bot...\n");
 

@@ -293,6 +293,46 @@ export async function getAllGuildLinkedAccounts(guildId) {
 }
 
 /**
+ * Get all linked accounts across all guilds (for role sync)
+ * @returns {Promise<Array>} Array of all linked accounts
+ */
+export async function getAllLinkedAccounts() {
+  const { data, error } = await supabase
+    .from("linked_accounts")
+    .select("*")
+    .eq("verified", true);
+
+  if (error) {
+    console.error("Error fetching all linked accounts:", error);
+    throw error;
+  }
+
+  return data || [];
+}
+
+/**
+ * Update the rank of a linked account
+ * @param {string} accountId - UUID of the linked account
+ * @param {string} newRank - New Codeforces rank
+ * @returns {Promise<Object>} Updated account record
+ */
+export async function updateLinkedAccountRank(accountId, newRank) {
+  const { data, error } = await supabase
+    .from("linked_accounts")
+    .update({ rank: newRank })
+    .eq("id", accountId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error updating linked account rank:", error);
+    throw error;
+  }
+
+  return data;
+}
+
+/**
  * Check if an account is already linked by another user in the guild
  * @param {string} guildId - Discord guild ID
  * @param {string} platform - Platform name
