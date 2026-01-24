@@ -27,26 +27,23 @@ CREATE INDEX IF NOT EXISTS idx_guild_config_guild_id ON guild_config(guild_id);
 -- =====================================================
 -- Table: linked_accounts
 -- Stores verified CP accounts linked to Discord users
--- Supports multiple accounts per user per platform
 -- =====================================================
 CREATE TABLE IF NOT EXISTS linked_accounts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     discord_user_id TEXT NOT NULL,
     guild_id TEXT NOT NULL,
-    platform TEXT NOT NULL CHECK (platform IN ('codeforces')),
     username TEXT NOT NULL,
     verified BOOLEAN DEFAULT FALSE,
     verified_at TIMESTAMP WITH TIME ZONE,
     rank TEXT, -- Stores Codeforces rank (newbie, pupil, etc.)
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     
-    -- Ensure unique account per platform per guild
-    UNIQUE(discord_user_id, guild_id, platform, username)
+    -- Ensure unique account per guild
+    UNIQUE(discord_user_id, guild_id, username)
 );
 
 -- Indexes for common queries
 CREATE INDEX IF NOT EXISTS idx_linked_accounts_user ON linked_accounts(discord_user_id);
-CREATE INDEX IF NOT EXISTS idx_linked_accounts_platform ON linked_accounts(platform);
 CREATE INDEX IF NOT EXISTS idx_linked_accounts_guild ON linked_accounts(guild_id);
 
 -- =====================================================
@@ -58,7 +55,6 @@ CREATE TABLE IF NOT EXISTS pending_verifications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     discord_user_id TEXT NOT NULL,
     guild_id TEXT NOT NULL,
-    platform TEXT NOT NULL CHECK (platform IN ('codeforces')),
     username TEXT NOT NULL,
     problem_id TEXT NOT NULL,
     problem_url TEXT NOT NULL,
@@ -67,7 +63,7 @@ CREATE TABLE IF NOT EXISTS pending_verifications (
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
     
     -- Prevent duplicate pending verifications for same account
-    UNIQUE(discord_user_id, guild_id, platform, username)
+    UNIQUE(discord_user_id, guild_id, username)
 );
 
 -- Index for finding user's pending verifications

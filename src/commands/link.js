@@ -89,7 +89,6 @@ async function handleLinkCodeforces(interaction) {
 	await createPendingVerification({
 		discord_user_id: userId,
 		guild_id: guildId,
-	  platform: "codeforces",
 		username: userInfo.handle, // Use the exact handle from CF API
 		problem_id: problem.id,
 		problem_url: problem.url,

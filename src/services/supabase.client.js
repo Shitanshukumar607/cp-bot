@@ -112,7 +112,6 @@ export async function createPendingVerification(verification) {
   const {
     discord_user_id,
     guild_id,
-    platform,
     username,
     problem_id,
     problem_url,
@@ -120,13 +119,11 @@ export async function createPendingVerification(verification) {
     expires_at,
   } = verification;
 
-  // First, delete any existing pending verification for this user/platform/username
   await supabase
     .from("pending_verifications")
     .delete()
     .eq("discord_user_id", discord_user_id)
     .eq("guild_id", guild_id)
-    .eq("platform", platform)
     .eq("username", username);
 
   // Create new pending verification
@@ -135,7 +132,6 @@ export async function createPendingVerification(verification) {
     .insert({
       discord_user_id,
       guild_id,
-      platform,
       username,
       problem_id,
       problem_url,
@@ -220,7 +216,7 @@ export async function cleanupExpiredVerifications() {
  * @returns {Promise<Object>} Created account record
  */
 export async function createLinkedAccount(account) {
-  const { discord_user_id, guild_id, platform, username, rank } = account;
+  const { discord_user_id, guild_id, username, rank } = account;
 
   const { data, error } = await supabase
     .from("linked_accounts")
@@ -228,14 +224,13 @@ export async function createLinkedAccount(account) {
       {
         discord_user_id,
         guild_id,
-        platform,
         username,
         verified: true,
         verified_at: new Date().toISOString(),
         rank,
       },
       {
-        onConflict: "discord_user_id,guild_id,platform,username",
+        onConflict: "discord_user_id,guild_id,username",
       },
     )
     .select()
@@ -281,7 +276,6 @@ export async function getAllGuildLinkedAccounts(guildId) {
     .from("linked_accounts")
     .select("*")
     .eq("guild_id", guildId)
-    .eq("platform", "codeforces")
     .eq("verified", true);
 
   if (error) {
@@ -335,22 +329,15 @@ export async function updateLinkedAccountRank(accountId, newRank) {
 /**
  * Check if an account is already linked by another user in the guild
  * @param {string} guildId - Discord guild ID
- * @param {string} platform - Platform name
  * @param {string} username - CP username
  * @param {string} excludeUserId - User ID to exclude from check
  * @returns {Promise<boolean>} True if account is already linked
  */
-export async function isAccountLinkedByOther(
-  guildId,
-  platform,
-  username,
-  excludeUserId,
-) {
+export async function isAccountLinkedByOther(guildId, username, excludeUserId) {
   const { data, error } = await supabase
     .from("linked_accounts")
     .select("discord_user_id")
     .eq("guild_id", guildId)
-    .eq("platform", platform)
     .ilike("username", username)
     .eq("verified", true)
     .neq("discord_user_id", excludeUserId)
