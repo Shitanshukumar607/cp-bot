@@ -116,7 +116,7 @@ async function handleLinkCodeforces(interaction) {
 			},
 			{
 				name: "⏱️ Time Limit",
-				value: remaining.formatted,
+				value: remaining,
 				inline: true,
 			},
 			{
@@ -131,7 +131,7 @@ async function handleLinkCodeforces(interaction) {
 			},
 		)
 		.setFooter({
-			text: `Verification expires in ${remaining.formatted}`,
+			text: `Verification expires in ${remaining}`,
 		})
 		.setTimestamp(expiresAt);
 

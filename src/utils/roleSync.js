@@ -10,7 +10,7 @@ import {
   getAllLinkedAccounts,
   updateLinkedAccountRank,
   getGuildConfig,
-} from "../services/supabase.client.js";
+} from "../services/supabase.client.ts";
 import { assignRankRole } from "./roleManager.js";
 
 // Delay between Codeforces API calls to avoid rate limiting (in ms)

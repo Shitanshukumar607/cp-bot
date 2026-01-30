@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { cleanupExpiredVerifications } from "./services/supabase.client.js";
+import { cleanupExpiredVerifications } from "./services/supabase.client.ts";
 import { startRoleSyncJob } from "./utils/roleSync.js";
 
 dotenv.config();

@@ -127,7 +127,7 @@ export async function execute(interaction) {
             "No valid Compilation Error submission found.",
           problemUrl: pending.problem_url,
           problemName: pending.problem_name,
-          timeRemaining: remaining.formatted,
+          timeRemaining: remaining,
         });
       }
     }
