@@ -81,22 +81,6 @@ export async function getRandomCodeforcesProblem() {
 	};
 }
 
-/**
- * Validate that a Codeforces problem exists
- * @param {number} contestId - Contest ID
- * @param {string} index - Problem index (A, B, C, etc.)
- * @returns {Promise<boolean>} True if problem exists
- */
-export async function validateCodeforcesProblem(contestId, index) {
-	try {
-		const problems = await fetchCodeforcesProblems();
-		return problems.some((p) => p.contestId === contestId && p.index === index);
-	} catch {
-		return false;
-	}
-}
-
 export default {
 	getRandomCodeforcesProblem,
-	validateCodeforcesProblem,
 };
