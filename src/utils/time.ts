@@ -38,7 +38,7 @@ export function getRemainingTime(expiresAt: string): string {
 /** Check if a submission time is after the verification start time */
 export function isSubmissionAfterStart(
   submissionTime: number,
-  startedAt: string,
+  startedAt: string | Date,
 ): boolean {
   const startTimestamp = Math.floor(new Date(startedAt).getTime() / 1000);
   return submissionTime >= startTimestamp;
