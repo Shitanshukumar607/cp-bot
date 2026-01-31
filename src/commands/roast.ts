@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from "discord.js";
+import { SlashCommandBuilder, ChatInputCommandInteraction } from "discord.js";
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
@@ -6,7 +6,7 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-function loadJokes() {
+function loadJokes(): string[] {
   try {
     const jokesPath = join(__dirname, "../data/jokes.txt");
     const jokesContent = readFileSync(jokesPath, "utf-8");
@@ -30,18 +30,24 @@ export const data = new SlashCommandBuilder()
       .setRequired(true),
   );
 
-export async function execute(interaction) {
-  const targetUser = interaction.options.getUser("user") || interaction.user;
+export async function execute(
+  interaction: ChatInputCommandInteraction,
+): Promise<void> {
+  const targetUser = interaction.options.getUser("user", true);
 
-  if (targetUser == interaction.user) {
-    return await interaction.reply(
+  if (targetUser.id === interaction.user.id) {
+    await interaction.reply(
       "Imagine being so lonely you have to roast yourself. That's not a flex, that's just sad. 💀",
     );
+    return;
   }
 
   const jokes = loadJokes();
 
-  const randomJoke = jokes[Math.floor(Math.random() * jokes.length)];
+  const randomIndex = Math.floor(Math.random() * jokes.length);
+  const randomJoke =
+    jokes[randomIndex] ??
+    "Your code is so bad, even the compiler refuses to roast you.";
 
   await interaction.reply(`<@${targetUser.id}> ${randomJoke}`);
 }
