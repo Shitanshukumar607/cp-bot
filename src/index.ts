@@ -1,12 +1,29 @@
-import { Client, Collection, Events, GatewayIntentBits } from "discord.js";
+import {
+  Client,
+  Collection,
+  Events,
+  GatewayIntentBits,
+  Interaction,
+  ChatInputCommandInteraction,
+  SlashCommandBuilder,
+} from "discord.js";
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { cleanupExpiredVerifications } from "./services/supabase.client.ts";
+import { cleanupExpiredVerifications } from "./services/supabase.client.js";
 import { startRoleSyncJob } from "./utils/roleSync.js";
 
 dotenv.config();
+
+interface Command {
+  data: SlashCommandBuilder;
+  execute: (interaction: ChatInputCommandInteraction) => Promise<void>;
+}
+
+interface ExtendedClient extends Client {
+  commands: Collection<string, Command>;
+}
 
 const requiredEnvVars = [
   "DISCORD_TOKEN",
@@ -26,12 +43,11 @@ const __dirname = path.dirname(__filename);
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
-});
+}) as ExtendedClient;
 
-client.commands = new Collection();
+client.commands = new Collection<string, Command>();
 
-// Load all command files from the commands directory
-async function loadCommands() {
+async function loadCommands(): Promise<void> {
   const commandsPath = path.join(__dirname, "commands");
 
   if (!fs.existsSync(commandsPath)) {
@@ -47,11 +63,17 @@ async function loadCommands() {
     const filePath = path.join(commandsPath, file);
 
     try {
-      const command = await import(`file://${filePath}`);
+      const command = (await import(`file://${filePath}`)) as unknown;
 
-      if ("data" in command && "execute" in command) {
-        client.commands.set(command.data.name, command);
-        console.log(`Loaded command: ${command.data.name}`);
+      if (
+        typeof command === "object" &&
+        command !== null &&
+        "data" in command &&
+        "execute" in command
+      ) {
+        const cmd = command as Command;
+        client.commands.set(cmd.data.name, cmd);
+        console.log(`Loaded command: ${cmd.data.name}`);
       } else {
         console.warn(
           `Command at ${file} is missing required "data" or "execute" property`,
@@ -63,8 +85,7 @@ async function loadCommands() {
   }
 }
 
-// Handle slash command interactions
-async function handleInteraction(interaction) {
+async function handleInteraction(interaction: Interaction): Promise<void> {
   if (!interaction.isChatInputCommand()) return;
 
   const command = client.commands.get(interaction.commandName);
@@ -91,19 +112,19 @@ async function handleInteraction(interaction) {
   }
 }
 
-// Cleanup expired verifications periodically
-function startVerificationCleanupJob() {
+function startVerificationCleanupJob(): void {
   const CLEANUP_INTERVAL = 5 * 60 * 1000;
 
-  setInterval(async () => {
-    try {
-      const deletedCount = await cleanupExpiredVerifications();
-      if (deletedCount > 0) {
-        console.log(`Cleaned up ${deletedCount} expired verification(s)`);
-      }
-    } catch (error) {
-      console.error("Error during verification cleanup:", error);
-    }
+  setInterval(() => {
+    cleanupExpiredVerifications()
+      .then((deletedCount) => {
+        if (deletedCount > 0) {
+          console.log(`Cleaned up ${deletedCount} expired verification(s)`);
+        }
+      })
+      .catch((error: unknown) => {
+        console.error("Error during verification cleanup:", error);
+      });
   }, CLEANUP_INTERVAL);
 
   console.log("Verification cleanup job started (every 5 minutes)");
@@ -121,7 +142,11 @@ client.once(Events.ClientReady, (readyClient) => {
   startRoleSyncJob(client);
 });
 
-client.on(Events.InteractionCreate, handleInteraction);
+client.on(Events.InteractionCreate, (interaction) => {
+  handleInteraction(interaction).catch((error: unknown) => {
+    console.error("Error handling interaction:", error);
+  });
+});
 
 client.on(Events.Error, (error) => {
   console.error("Discord client error:", error);
@@ -137,7 +162,7 @@ process.on("uncaughtException", (error) => {
   console.error("Uncaught exception:", error);
 });
 
-async function main() {
+async function main(): Promise<void> {
   console.log("Starting CP Verification Bot...\n");
 
   try {
@@ -151,4 +176,7 @@ async function main() {
   }
 }
 
-main();
+main().catch((error: unknown) => {
+  console.error("Fatal error:", error);
+  process.exit(1);
+});
