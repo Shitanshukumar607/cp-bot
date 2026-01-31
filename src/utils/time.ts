@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const VERIFICATION_TIMEOUT = parseInt(process.env.VERIFICATION_TIMEOUT!) || 10;
+const VERIFICATION_TIMEOUT = parseInt(process.env.VERIFICATION_TIMEOUT ?? "10");
 
 /** Calculate expiration timestamp for verification */
 export function getExpirationTime(
