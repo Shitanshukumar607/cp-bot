@@ -14,7 +14,7 @@ const CODEFORCES_API_BASE = "https://codeforces.com/api";
 const REQUEST_DELAY = 250;
 let lastRequestTime = 0;
 
-/** Wait to respect rate limits*/
+/** Wait to respect rate limits */
 async function respectRateLimit() {
   const now = Date.now();
   const timeSinceLastRequest = now - lastRequestTime;
@@ -28,7 +28,7 @@ async function respectRateLimit() {
   lastRequestTime = Date.now();
 }
 
-/**Make a rate-limited request to Codeforces API */
+/** Make a rate-limited request to Codeforces API */
 async function makeRequest<T>(
   endpoint: string,
   params: Record<string, string | number> = {},

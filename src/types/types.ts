@@ -1,6 +1,6 @@
 import type { Database } from "./db.types.js";
 
-export type GuidConfig = Database["public"]["Tables"]["guild_config"]["Row"];
+export type GuildConfig = Database["public"]["Tables"]["guild_config"]["Row"];
 
 export type PendingVerification =
   Database["public"]["Tables"]["pending_verifications"]["Row"];
