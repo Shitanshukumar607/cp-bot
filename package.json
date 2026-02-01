@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "tsc -p tsconfig.build.json && node dist/index.js",
-    "deploy": "node src/deploy-commands.js",
+    "deploy": "node --experimental-strip-types src/deploy-commands.js",
     "dev": "node --watch --experimental-strip-types src/index.ts"
   },
   "keywords": [
