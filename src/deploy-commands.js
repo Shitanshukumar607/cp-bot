@@ -27,8 +27,8 @@ async function loadCommandsData() {
 	}
 
 	const commandFiles = fs
-		.readdirSync(commandsPath)
-		.filter((file) => file.endsWith(".js"));
+    .readdirSync(commandsPath)
+    .filter((file) => file.endsWith(".ts") || file.endsWith(".js"));
 
 	for (const file of commandFiles) {
 		const filePath = path.join(commandsPath, file);

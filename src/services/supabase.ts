@@ -1,12 +1,12 @@
-/**
- * Supabase Client Configuration
- *
- * This module initializes and exports the Supabase client
- * for database operations throughout the bot.
- */
-
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
+import { type Database } from "../types/db.types.ts";
+import type {
+  CodeforcesRank,
+  GuildConfig,
+  LinkedAccounts,
+  PendingVerification,
+} from "../types/types.ts";
 
 dotenv.config();
 
@@ -19,19 +19,12 @@ if (!supabaseUrl || !supabaseKey) {
   );
 }
 
-// Create Supabase client instance
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
-// =====================================================
-// Guild Configuration Operations
-// =====================================================
-
-/**
- * Get guild configuration by guild ID
- * @param {string} guildId - Discord guild ID
- * @returns {Promise<Object|null>} Guild config or null if not found
- */
-export async function getGuildConfig(guildId) {
+/** Get guild configuration by guild ID */
+export async function getGuildConfig(
+  guildId: string,
+): Promise<GuildConfig | null> {
   const { data, error } = await supabase
     .from("guild_config")
     .select("*")
@@ -39,7 +32,6 @@ export async function getGuildConfig(guildId) {
     .single();
 
   if (error && error.code !== "PGRST116") {
-    // PGRST116 = not found
     console.error("Error fetching guild config:", error);
     throw error;
   }
@@ -47,12 +39,8 @@ export async function getGuildConfig(guildId) {
   return data;
 }
 
-/**
- * Set or update the verified role for a guild
- * @param {string} guildId - Discord guild ID
- * @param {string} roleId - Discord role ID
- */
-export async function setVerifiedRole(guildId, roleId) {
+/** Set or update the verified role for a guild */
+export async function setVerifiedRole(guildId: string, roleId: string) {
   const { error } = await supabase.from("guild_config").upsert(
     {
       guild_id: guildId,
@@ -69,18 +57,15 @@ export async function setVerifiedRole(guildId, roleId) {
   }
 }
 
-/**
- * Set or update a rank-to-role mapping for a guild
- * @param {string} guildId - Discord guild ID
- * @param {string} rank - Codeforces rank (e.g., 'newbie', 'pupil')
- * @param {string} roleId - Discord role ID
- */
-export async function setRankRole(guildId, rank, roleId) {
-  // First, get existing config
+/** Set or update the rank role mapping for a guild */
+export async function setRankRole(
+  guildId: string,
+  rank: CodeforcesRank,
+  roleId: string,
+) {
   const existing = await getGuildConfig(guildId);
-  const currentMap = existing?.rank_role_map || {};
+  const currentMap = (existing?.rank_role_map || {}) as Record<string, string>;
 
-  // Update the rank mapping
   const newMap = { ...currentMap, [rank.toLowerCase()]: roleId };
 
   const { error } = await supabase.from("guild_config").upsert(
@@ -99,16 +84,10 @@ export async function setRankRole(guildId, rank, roleId) {
   }
 }
 
-// =====================================================
-// Pending Verification Operations
-// =====================================================
-
-/**
- * Create a new pending verification session
- * @param {Object} verification - Verification details
- * @returns {Promise<Object>} Created verification record
- */
-export async function createPendingVerification(verification) {
+/** Create a new pending verification session */
+export async function createPendingVerification(
+  verification: PendingVerification,
+): Promise<PendingVerification> {
   const {
     discord_user_id,
     guild_id,
@@ -126,7 +105,6 @@ export async function createPendingVerification(verification) {
     .eq("guild_id", guild_id)
     .eq("username", username);
 
-  // Create new pending verification
   const { data, error } = await supabase
     .from("pending_verifications")
     .insert({
@@ -149,19 +127,17 @@ export async function createPendingVerification(verification) {
   return data;
 }
 
-/**
- * Get all pending verifications for a user in a guild
- * @param {string} discordUserId - Discord user ID
- * @param {string} guildId - Discord guild ID
- * @returns {Promise<Array>} Array of pending verifications
- */
-export async function getPendingVerifications(discordUserId, guildId) {
+/** Get all pending verifications for a user in a guild */
+export async function getPendingVerifications(
+  discordUserId: string,
+  guildId: string,
+): Promise<Array<PendingVerification>> {
   const { data, error } = await supabase
     .from("pending_verifications")
     .select("*")
     .eq("discord_user_id", discordUserId)
     .eq("guild_id", guildId)
-    .gt("expires_at", new Date().toISOString()); // Only non-expired
+    .gt("expires_at", new Date().toISOString());
 
   if (error) {
     console.error("Error fetching pending verifications:", error);
@@ -171,11 +147,10 @@ export async function getPendingVerifications(discordUserId, guildId) {
   return data || [];
 }
 
-/**
- * Delete a pending verification by ID
- * @param {string} verificationId - UUID of the verification
- */
-export async function deletePendingVerification(verificationId) {
+/** Delete a pending verification by ID */
+export async function deletePendingVerification(
+  verificationId: string,
+): Promise<void> {
   const { error } = await supabase
     .from("pending_verifications")
     .delete()
@@ -187,11 +162,8 @@ export async function deletePendingVerification(verificationId) {
   }
 }
 
-/**
- * Clean up expired pending verifications
- * @returns {Promise<number>} Number of deleted records
- */
-export async function cleanupExpiredVerifications() {
+/** Clean up expired pending verifications */
+export async function cleanupExpiredVerifications(): Promise<number> {
   const { data, error } = await supabase
     .from("pending_verifications")
     .delete()
@@ -206,16 +178,13 @@ export async function cleanupExpiredVerifications() {
   return data?.length || 0;
 }
 
-// =====================================================
-// Linked Accounts Operations
-// =====================================================
-
-/**
- * Create a verified linked account
- * @param {Object} account - Account details
- * @returns {Promise<Object>} Created account record
- */
-export async function createLinkedAccount(account) {
+/** Create a verified linked account */
+export async function createLinkedAccount(account: {
+  discord_user_id: string;
+  guild_id: string;
+  username: string;
+  rank: CodeforcesRank | null;
+}): Promise<LinkedAccounts> {
   const { discord_user_id, guild_id, username, rank } = account;
 
   const { data, error } = await supabase
@@ -244,13 +213,11 @@ export async function createLinkedAccount(account) {
   return data;
 }
 
-/**
- * Get all linked accounts for a user in a guild
- * @param {string} discordUserId - Discord user ID
- * @param {string} guildId - Discord guild ID
- * @returns {Promise<Array>} Array of linked accounts
- */
-export async function getLinkedAccounts(discordUserId, guildId) {
+/** Get all linked accounts for a user in a guild */
+export async function getLinkedAccounts(
+  discordUserId: string,
+  guildId: string,
+): Promise<Array<LinkedAccounts>> {
   const { data, error } = await supabase
     .from("linked_accounts")
     .select("*")
@@ -266,12 +233,10 @@ export async function getLinkedAccounts(discordUserId, guildId) {
   return data || [];
 }
 
-/**
- * Get all linked accounts for a guild (for leaderboard)
- * @param {string} guildId - Discord guild ID
- * @returns {Promise<Array>} Array of all linked accounts in the guild
- */
-export async function getAllGuildLinkedAccounts(guildId) {
+/** Get all linked accounts for a guild */
+export async function getAllGuildLinkedAccounts(
+  guildId: string,
+): Promise<Array<LinkedAccounts>> {
   const { data, error } = await supabase
     .from("linked_accounts")
     .select("*")
@@ -286,11 +251,8 @@ export async function getAllGuildLinkedAccounts(guildId) {
   return data || [];
 }
 
-/**
- * Get all linked accounts across all guilds (for role sync)
- * @returns {Promise<Array>} Array of all linked accounts
- */
-export async function getAllLinkedAccounts() {
+/** Get all linked accounts across all guilds */
+export async function getAllLinkedAccounts(): Promise<Array<LinkedAccounts>> {
   const { data, error } = await supabase
     .from("linked_accounts")
     .select("*")
@@ -304,13 +266,11 @@ export async function getAllLinkedAccounts() {
   return data || [];
 }
 
-/**
- * Update the rank of a linked account
- * @param {string} accountId - UUID of the linked account
- * @param {string} newRank - New Codeforces rank
- * @returns {Promise<Object>} Updated account record
- */
-export async function updateLinkedAccountRank(accountId, newRank) {
+/** Update the rank of a linked account */
+export async function updateLinkedAccountRank(
+  accountId: string,
+  newRank: string,
+): Promise<LinkedAccounts> {
   const { data, error } = await supabase
     .from("linked_accounts")
     .update({ rank: newRank })
@@ -326,14 +286,12 @@ export async function updateLinkedAccountRank(accountId, newRank) {
   return data;
 }
 
-/**
- * Check if an account is already linked by another user in the guild
- * @param {string} guildId - Discord guild ID
- * @param {string} username - CP username
- * @param {string} excludeUserId - User ID to exclude from check
- * @returns {Promise<boolean>} True if account is already linked
- */
-export async function isAccountLinkedByOther(guildId, username, excludeUserId) {
+/** Check if an account is already linked by another user in the guild */
+export async function isAccountLinkedByOther(
+  guildId: string,
+  username: string,
+  excludeUserId: string,
+): Promise<boolean> {
   const { data, error } = await supabase
     .from("linked_accounts")
     .select("discord_user_id")

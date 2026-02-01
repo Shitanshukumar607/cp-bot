@@ -1,36 +1,29 @@
-/**
- * Role Sync Utility
- *
- * Automatically syncs Discord roles with current Codeforces ranks.
- * Runs periodically to update roles when users' ratings change.
- */
-
-import { getUserInfo } from "../services/codeforces.service.js";
+import { Client } from "discord.js";
+import { getUserInfo } from "../services/codeforces.service.ts";
 import {
   getAllLinkedAccounts,
   updateLinkedAccountRank,
   getGuildConfig,
-} from "../services/supabase.client.js";
-import { assignRankRole } from "./roleManager.js";
+} from "../services/supabase.ts";
+import { assignRankRole } from "./roleManager.ts";
 
-// Delay between Codeforces API calls to avoid rate limiting (in ms)
 const API_DELAY = 500;
 
-/**
- * Sleep for a specified duration
- * @param {number} ms - Milliseconds to sleep
- */
-function sleep(ms) {
+interface SyncResults {
+  totalProcessed: number;
+  rolesUpdated: number;
+  errors: string[];
+  skipped: number;
+}
+
+/** Sleep for a specified duration */
+function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/**
- * Sync roles for all linked users across all guilds
- * @param {Client} client - Discord.js client instance
- * @returns {Promise<Object>} Sync results summary
- */
-export async function syncAllRoles(client) {
-  const results = {
+/** Sync roles for all linked users across all guilds */
+export async function syncAllRoles(client: Client): Promise<SyncResults> {
+  const results: SyncResults = {
     totalProcessed: 0,
     rolesUpdated: 0,
     errors: [],
@@ -40,7 +33,6 @@ export async function syncAllRoles(client) {
   console.log("[RoleSync] Starting role sync job...");
 
   try {
-    // Get all linked accounts from database
     const allAccounts = await getAllLinkedAccounts();
 
     if (!allAccounts || allAccounts.length === 0) {
@@ -52,23 +44,21 @@ export async function syncAllRoles(client) {
       `[RoleSync] Found ${allAccounts.length} linked accounts to process.`,
     );
 
-    // Group accounts by guild for efficient processing
-    const accountsByGuild = new Map();
+    const accountsByGuild = new Map<string, typeof allAccounts>();
     for (const account of allAccounts) {
-      if (!accountsByGuild.has(account.guild_id)) {
+      const existing = accountsByGuild.get(account.guild_id);
+      if (!existing) {
         accountsByGuild.set(account.guild_id, []);
       }
-      accountsByGuild.get(account.guild_id).push(account);
+      accountsByGuild.get(account.guild_id)!.push(account);
     }
 
-    // Process each guild
     for (const [guildId, accounts] of accountsByGuild) {
-      // Check if guild has rank roles configured
       const config = await getGuildConfig(guildId);
       if (
         !config ||
         !config.rank_role_map ||
-        Object.keys(config.rank_role_map).length === 0
+        Object.keys(config.rank_role_map as object).length === 0
       ) {
         console.log(
           `[RoleSync] Guild ${guildId} has no rank roles configured, skipping.`,
@@ -77,7 +67,6 @@ export async function syncAllRoles(client) {
         continue;
       }
 
-      // Get the Discord guild
       const guild = client.guilds.cache.get(guildId);
       if (!guild) {
         console.log(
@@ -87,34 +76,27 @@ export async function syncAllRoles(client) {
         continue;
       }
 
-      // Process each account in this guild
       for (const account of accounts) {
         results.totalProcessed++;
 
         try {
-          // Add delay to avoid Codeforces rate limiting
           await sleep(API_DELAY);
 
-          // Fetch current rank from Codeforces
           const cfUserInfo = await getUserInfo(account.username);
-          const currentRank = cfUserInfo.rank?.toLowerCase() || null;
-          const storedRank = account.rank?.toLowerCase() || null;
+          const currentRank = cfUserInfo.rank?.toLowerCase() ?? null;
+          const storedRank = account.rank?.toLowerCase() ?? null;
 
-          // Check if rank has changed
           if (currentRank && currentRank !== storedRank) {
             console.log(
-              `[RoleSync] User ${account.username} rank changed: ${storedRank || "none"} -> ${currentRank}`,
+              `[RoleSync] User ${account.username} rank changed: ${storedRank ?? "none"} -> ${currentRank}`,
             );
 
-            // Update rank in database
             await updateLinkedAccountRank(account.id, currentRank);
 
-            // Try to get the Discord member
             try {
               const member = await guild.members.fetch(account.discord_user_id);
 
               if (member) {
-                // Update Discord role
                 const roleAssigned = await assignRankRole(
                   member,
                   guildId,
@@ -129,8 +111,11 @@ export async function syncAllRoles(client) {
                 }
               }
             } catch (memberError) {
-              // Member might have left the server
-              if (memberError.code === 10007) {
+              if (
+                memberError instanceof Error &&
+                "code" in memberError &&
+                memberError.code === 10007
+              ) {
                 console.log(
                   `[RoleSync] User ${account.discord_user_id} not found in guild ${guildId}`,
                 );
@@ -140,16 +125,19 @@ export async function syncAllRoles(client) {
             }
           }
         } catch (error) {
-          const errorMsg = `Failed to sync ${account.username} in guild ${guildId}: ${error.message}`;
+          const errorMessage =
+            error instanceof Error ? error.message : "Unknown error";
+          const errorMsg = `Failed to sync ${account.username} in guild ${guildId}: ${errorMessage}`;
           console.error(`[RoleSync] ${errorMsg}`);
           results.errors.push(errorMsg);
-          // Continue with other users even if one fails
         }
       }
     }
   } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     console.error("[RoleSync] Critical error during role sync:", error);
-    results.errors.push(`Critical error: ${error.message}`);
+    results.errors.push(`Critical error: ${errorMessage}`);
   }
 
   console.log(
@@ -159,28 +147,23 @@ export async function syncAllRoles(client) {
   return results;
 }
 
-/**
- * Start the periodic role sync job
- * @param {Client} client - Discord.js client instance
- * @param {number} intervalMs - Interval in milliseconds (default: 1 hour)
- * @returns {NodeJS.Timeout} The interval timer
- */
-export function startRoleSyncJob(client, intervalMs = 60 * 60 * 1000) {
+/** Start the periodic role sync job */
+export function startRoleSyncJob(
+  client: Client,
+  intervalMs: number = 60 * 60 * 1000,
+): NodeJS.Timeout {
   console.log(
     `[RoleSync] Role sync job scheduled to run every ${intervalMs / 1000 / 60} minutes.`,
   );
 
-  // Run immediately on start, then every interval
-  syncAllRoles(client).catch((err) => {
+  syncAllRoles(client).catch((err: unknown) => {
     console.error("[RoleSync] Error in initial sync:", err);
   });
 
-  return setInterval(async () => {
-    try {
-      await syncAllRoles(client);
-    } catch (error) {
+  return setInterval(() => {
+    syncAllRoles(client).catch((error: unknown) => {
       console.error("[RoleSync] Error in scheduled sync:", error);
-    }
+    });
   }, intervalMs);
 }
 

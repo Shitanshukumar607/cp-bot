@@ -1,12 +1,24 @@
-import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
-import { getAllGuildLinkedAccounts } from "../services/supabase.client.js";
-import { getUserInfo } from "../services/codeforces.service.js";
+import {
+  SlashCommandBuilder,
+  EmbedBuilder,
+  ChatInputCommandInteraction,
+} from "discord.js";
+import { getAllGuildLinkedAccounts } from "../services/supabase.ts";
+import { getUserInfo } from "../services/codeforces.service.ts";
+
+interface LeaderboardEntry {
+  discordUserId: string;
+  username: string;
+  rating: number;
+  maxRating: number;
+  rank: string;
+}
 
 export const data = new SlashCommandBuilder()
   .setName("leaderboard")
   .setDescription("View the Codeforces leaderboard for this server");
 
-function getPositionDisplay(position) {
+function getPositionDisplay(position: number): string {
   switch (position) {
     case 1:
       return "🥇";
@@ -19,22 +31,32 @@ function getPositionDisplay(position) {
   }
 }
 
-export async function execute(interaction) {
+export async function execute(
+  interaction: ChatInputCommandInteraction,
+): Promise<void> {
   await interaction.deferReply();
 
   const guildId = interaction.guildId;
+
+  if (!guildId) {
+    await interaction.editReply({
+      content: "This command can only be used in a server.",
+    });
+    return;
+  }
 
   try {
     const linkedAccounts = await getAllGuildLinkedAccounts(guildId);
 
     if (!linkedAccounts || linkedAccounts.length === 0) {
-      return await interaction.editReply({
+      await interaction.editReply({
         content:
           "No users have linked their Codeforces accounts yet.\n\nUse `/link codeforces <username>` to link your account and appear on the leaderboard!",
       });
+      return;
     }
 
-    const leaderboardData = [];
+    const leaderboardData: LeaderboardEntry[] = [];
 
     for (const account of linkedAccounts) {
       try {
@@ -47,18 +69,21 @@ export async function execute(interaction) {
           rank: userInfo.rank || "unrated",
         });
       } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
         console.warn(
           `Could not fetch info for ${account.username}:`,
-          error.message,
+          errorMessage,
         );
       }
     }
 
     if (leaderboardData.length === 0) {
-      return await interaction.editReply({
+      await interaction.editReply({
         content:
           "Could not fetch Codeforces data for any linked users. Please try again later.",
       });
+      return;
     }
 
     leaderboardData.sort((a, b) => b.rating - a.rating);
@@ -106,8 +131,10 @@ export async function execute(interaction) {
   } catch (error) {
     console.error("Leaderboard command error:", error);
 
+    const errorMessage =
+      error instanceof Error ? error.message : "An unexpected error occurred.";
     await interaction.editReply({
-      content: `Error fetching leaderboard: ${error.message || "An unexpected error occurred."}`,
+      content: `Error fetching leaderboard: ${errorMessage}`,
     });
   }
 }
