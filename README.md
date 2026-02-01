@@ -2,6 +2,12 @@
 
 A Discord bot for verifying Codeforces accounts and tracking competitive programming stats.
 
+**Hosted on Microsoft Azure** for reliable 24/7 uptime.
+
+## Add to Your Server
+
+[**Invite CP Bot**](https://discord.com/oauth2/authorize?client_id=1461056439970697216)
+
 ## Features
 
 - **Account Verification** - Link your Codeforces account via Compilation Error verification
