@@ -1,12 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
-import { Database } from "../types/db.types.js";
+import { Database } from "../types/db.types.ts";
 import type {
   CodeforcesRank,
   GuildConfig,
   LinkedAccounts,
   PendingVerification,
-} from "../types/types.js";
+} from "../types/types.ts";
 
 dotenv.config();
 

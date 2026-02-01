@@ -1,6 +1,6 @@
 import { GuildMember, Role, Collection } from "discord.js";
-import { getGuildConfig } from "../services/supabase.client.js";
-import type { CodeforcesRank } from "../types/types.js";
+import { getGuildConfig } from "../services/supabase.ts";
+import type { CodeforcesRank } from "../types/types.ts";
 
 export interface RoleAssignmentResults {
   verifiedRole: boolean;

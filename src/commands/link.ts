@@ -3,17 +3,17 @@ import {
   EmbedBuilder,
   ChatInputCommandInteraction,
 } from "discord.js";
-import { validateUser, getUserInfo } from "../services/codeforces.service.js";
+import { validateUser, getUserInfo } from "../services/codeforces.service.ts";
 import {
   createPendingVerification,
   isAccountLinkedByOther,
-} from "../services/supabase.client.js";
+} from "../services/supabase.ts";
 import {
   getRandomCodeforcesProblem,
   type RandomProblem,
-} from "../utils/randomProblem.js";
-import { getExpirationTime, getRemainingTime } from "../utils/time.js";
-import type { UserInfo } from "../types/types.js";
+} from "../utils/randomProblem.ts";
+import { getExpirationTime, getRemainingTime } from "../utils/time.ts";
+import type { UserInfo } from "../types/types.ts";
 
 export const data = new SlashCommandBuilder()
   .setName("link")
@@ -119,7 +119,7 @@ async function handleLinkCodeforces(
 
   const embed = new EmbedBuilder()
     .setTitle("🔗 Codeforces Verification")
-    .setColor(0x1f8acb) 
+    .setColor(0x1f8acb)
     .setDescription(
       `To verify you own the Codeforces account **${userInfo.handle}**, you need to submit a **Compilation Error** to the problem below.`,
     )

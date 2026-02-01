@@ -4,18 +4,18 @@ import {
   ChatInputCommandInteraction,
   GuildMember,
 } from "discord.js";
-import * as codeforcesService from "../services/codeforces.service.js";
+import * as codeforcesService from "../services/codeforces.service.ts";
 import {
   createLinkedAccount,
   deletePendingVerification,
   getPendingVerifications,
-} from "../services/supabase.client.js";
+} from "../services/supabase.ts";
 import {
   assignVerificationRoles,
   type RoleAssignmentResults,
-} from "../utils/roleManager.js";
-import { getRemainingTime, isExpired } from "../utils/time.js";
-import type { CodeforcesRank } from "../types/types.js";
+} from "../utils/roleManager.ts";
+import { getRemainingTime, isExpired } from "../utils/time.ts";
+import type { CodeforcesRank } from "../types/types.ts";
 
 interface VerificationResultSuccess {}
 

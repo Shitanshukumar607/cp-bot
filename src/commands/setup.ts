@@ -13,8 +13,8 @@ import {
   getGuildConfig,
   setRankRole,
   setVerifiedRole,
-} from "../services/supabase.client.js";
-import type { CodeforcesRank } from "../types/types.js";
+} from "../services/supabase.ts";
+import type { CodeforcesRank } from "../types/types.ts";
 
 export const data = new SlashCommandBuilder()
   .setName("setup")

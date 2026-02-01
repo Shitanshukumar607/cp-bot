@@ -1,11 +1,11 @@
 import { Client } from "discord.js";
-import { getUserInfo } from "../services/codeforces.service.js";
+import { getUserInfo } from "../services/codeforces.service.ts";
 import {
   getAllLinkedAccounts,
   updateLinkedAccountRank,
   getGuildConfig,
-} from "../services/supabase.client.js";
-import { assignRankRole } from "./roleManager.js";
+} from "../services/supabase.ts";
+import { assignRankRole } from "./roleManager.ts";
 
 const API_DELAY = 500;
 

@@ -3,7 +3,7 @@ import {
   EmbedBuilder,
   ChatInputCommandInteraction,
 } from "discord.js";
-import { getLinkedAccounts } from "../services/supabase.client.js";
+import { getLinkedAccounts } from "../services/supabase.ts";
 
 export const data = new SlashCommandBuilder()
   .setName("profile")

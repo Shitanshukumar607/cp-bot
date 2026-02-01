@@ -3,8 +3,8 @@ import {
   EmbedBuilder,
   ChatInputCommandInteraction,
 } from "discord.js";
-import { getAllGuildLinkedAccounts } from "../services/supabase.client.js";
-import { getUserInfo } from "../services/codeforces.service.js";
+import { getAllGuildLinkedAccounts } from "../services/supabase.ts";
+import { getUserInfo } from "../services/codeforces.service.ts";
 
 interface LeaderboardEntry {
   discordUserId: string;

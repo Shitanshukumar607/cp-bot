@@ -3,7 +3,7 @@ import {
   Collection,
   Events,
   GatewayIntentBits,
-  Interaction,
+  type Interaction,
   ChatInputCommandInteraction,
   SlashCommandBuilder,
 } from "discord.js";
@@ -11,8 +11,8 @@ import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { cleanupExpiredVerifications } from "./services/supabase.client.js";
-import { startRoleSyncJob } from "./utils/roleSync.js";
+import { cleanupExpiredVerifications } from "./services/supabase.ts";
+import { startRoleSyncJob } from "./utils/roleSync.ts";
 
 dotenv.config();
 

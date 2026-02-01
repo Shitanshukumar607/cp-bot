@@ -6,8 +6,8 @@ import {
   Submission,
   UserInfo,
   VerificationResult,
-} from "../types/types.js";
-import { isSubmissionAfterStart } from "../utils/time.js";
+} from "../types/types.ts";
+import { isSubmissionAfterStart } from "../utils/time.ts";
 
 const CODEFORCES_API_BASE = "https://codeforces.com/api";
 

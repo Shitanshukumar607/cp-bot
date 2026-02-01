@@ -1,4 +1,4 @@
-import type { Database } from "./db.types.js";
+import type { Database } from "./db.types.ts";
 
 export type GuildConfig = Database["public"]["Tables"]["guild_config"]["Row"];
 
