@@ -4,14 +4,17 @@
   "_version": "22.0.0",
 
   "extends": "@tsconfig/node22/tsconfig.json",
+  "exclude": ["node_modules", "dist", "eslint.config.js"],
 
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./dist",
+
     "lib": ["es2024", "ESNext.Array", "ESNext.Collection", "ESNext.Iterator"],
     "module": "nodenext",
 
     "allowImportingTsExtensions": true,
+    "noEmit": true,
 
     "strict": true,
     "moduleResolution": "node16",
@@ -23,6 +26,6 @@
     "resolveJsonModule": true,
     "moduleDetection": "force",
     "isolatedModules": true,
-    "verbatimModuleSyntax": false
+    "verbatimModuleSyntax": true
   }
 }

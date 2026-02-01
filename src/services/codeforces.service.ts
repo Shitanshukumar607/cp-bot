@@ -1,11 +1,11 @@
 import axios, { AxiosError } from "axios";
 import {
-  CodeforcesApiResponse,
-  CodeforcesSubmission,
-  CodeforcesUser,
-  Submission,
-  UserInfo,
-  VerificationResult,
+  type CodeforcesApiResponse,
+  type CodeforcesSubmission,
+  type CodeforcesUser,
+  type Submission,
+  type UserInfo,
+  type VerificationResult,
 } from "../types/types.ts";
 import { isSubmissionAfterStart } from "../utils/time.ts";
 
